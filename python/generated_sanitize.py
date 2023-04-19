@@ -279,10 +279,7 @@ def escape_css_string_helper(value):
 
 def filter_css_value_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_CSS_VALUE.search(value):
-    return 'zSoyz'
-
-  return value
+  return value if _FILTER_FOR_FILTER_CSS_VALUE.search(value) else 'zSoyz'
 
 
 def normalize_uri_helper(value):
@@ -293,84 +290,69 @@ def normalize_uri_helper(value):
 
 def filter_normalize_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_NORMALIZE_URI.search(value):
-    return 'about:invalid#zSoyz'
-
-  return _MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI__AND__FILTER_NORMALIZE_MEDIA_URI.sub(
-      _replacer_for_normalize_uri__and__filter_normalize_uri__and__filter_normalize_media_uri, value)
+  return (
+      _MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI__AND__FILTER_NORMALIZE_MEDIA_URI
+      .sub(
+          _replacer_for_normalize_uri__and__filter_normalize_uri__and__filter_normalize_media_uri,
+          value,
+      ) if _FILTER_FOR_FILTER_NORMALIZE_URI.search(value) else
+      'about:invalid#zSoyz')
 
 
 def filter_normalize_media_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_NORMALIZE_MEDIA_URI.search(value):
-    return 'about:invalid#zSoyz'
-
-  return _MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI__AND__FILTER_NORMALIZE_MEDIA_URI.sub(
-      _replacer_for_normalize_uri__and__filter_normalize_uri__and__filter_normalize_media_uri, value)
+  return (
+      _MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI__AND__FILTER_NORMALIZE_MEDIA_URI
+      .sub(
+          _replacer_for_normalize_uri__and__filter_normalize_uri__and__filter_normalize_media_uri,
+          value,
+      ) if _FILTER_FOR_FILTER_NORMALIZE_MEDIA_URI.search(value) else
+      'about:invalid#zSoyz')
 
 
 def filter_image_data_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_IMAGE_DATA_URI.search(value):
-    return 'data:image/gif;base64,zSoyz'
-
-  return value
+  return (value if _FILTER_FOR_FILTER_IMAGE_DATA_URI.search(value) else
+          'data:image/gif;base64,zSoyz')
 
 
 def filter_sip_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_SIP_URI.search(value):
-    return 'about:invalid#zSoyz'
-
-  return value
+  return (value if _FILTER_FOR_FILTER_SIP_URI.search(value) else
+          'about:invalid#zSoyz')
 
 
 def filter_sms_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_SMS_URI.search(value):
-    return 'about:invalid#zSoyz'
-
-  return value
+  return (value if _FILTER_FOR_FILTER_SMS_URI.search(value) else
+          'about:invalid#zSoyz')
 
 
 def filter_tel_uri_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_TEL_URI.search(value):
-    return 'about:invalid#zSoyz'
-
-  return value
+  return (value if _FILTER_FOR_FILTER_TEL_URI.search(value) else
+          'about:invalid#zSoyz')
 
 
 def filter_legacy_uri_behavior_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_LEGACY_URI_BEHAVIOR.search(value):
-    return 'about:invalid#zSoyz'
-
-  return value
+  return (value if _FILTER_FOR_FILTER_LEGACY_URI_BEHAVIOR.search(value) else
+          'about:invalid#zSoyz')
 
 
 def filter_html_attributes_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_HTML_ATTRIBUTES.search(value):
-    return 'zSoyz'
-
-  return value
+  return value if _FILTER_FOR_FILTER_HTML_ATTRIBUTES.search(value) else 'zSoyz'
 
 
 def filter_html_element_name_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_HTML_ELEMENT_NAME.search(value):
-    return 'zSoyz'
-
-  return value
+  return value if _FILTER_FOR_FILTER_HTML_ELEMENT_NAME.search(value) else 'zSoyz'
 
 
 def filter_csp_nonce_value_helper(value):
   value = str(value)
-  if not _FILTER_FOR_FILTER_CSP_NONCE_VALUE.search(value):
-    return 'zSoyz'
-
-  return value
+  return value if _FILTER_FOR_FILTER_CSP_NONCE_VALUE.search(value) else 'zSoyz'
 
 _HTML_TAG_REGEX = re.compile(r"""<(?:!|/?([a-zA-Z][a-zA-Z0-9:\-]*))(?:[^>'"]|"[^"]*"|'[^']*')*>""", re.U)
 

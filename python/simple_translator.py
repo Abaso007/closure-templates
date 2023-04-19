@@ -89,8 +89,8 @@ class SimpleTranslator(abstract_translator.AbstractTranslator):
     return icu.MessageFormat(_maybe_escape(msg_text, is_html), icu.Locale('en'))
 
   def render_icu(self, msg, values):
-    return msg.format(
-        list(values.keys()), list(_format_icu(v) for v in values.values()))
+    return msg.format(list(values.keys()),
+                      [_format_icu(v) for v in values.values()])
 
   def format_num(self,
                  value,
@@ -145,16 +145,9 @@ def _format_compact(value, short=True):
   for key, suffix in sorted(suffixes.items(), reverse=True):
     if value >= key:
       value = value / float(key)
-      if value >= 10:
-        pattern = '{0:,.0f}' + suffix
-      else:
-        pattern = '{0:.1f}' + suffix
+      pattern = '{0:,.0f}' + suffix if value >= 10 else '{0:.1f}' + suffix
       return pattern.format(value)
 
 
 def _maybe_escape(msg, is_html):
-  if is_html:
-    # Note that '&' is not replaced because the translation can contain HTML
-    # entities.
-    return msg.replace('<', '&lt;')
-  return msg
+  return msg.replace('<', '&lt;') if is_html else msg

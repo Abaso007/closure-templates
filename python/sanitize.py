@@ -103,13 +103,9 @@ def change_newline_to_br(value):
 
 
 def clean_html(value, safe_tags=None):
-  if not safe_tags:
-    safe_tags = generated_sanitize._SAFE_TAG_WHITELIST
-  else:
-    # Join the provided list with the default whitelist.
-    safe_tags = list(
-        set(safe_tags).union(generated_sanitize._SAFE_TAG_WHITELIST))
-
+  safe_tags = (list(
+      set(safe_tags).union(generated_sanitize._SAFE_TAG_WHITELIST))
+               if safe_tags else generated_sanitize._SAFE_TAG_WHITELIST)
   html = _get_content_of_kind(value, CONTENT_KIND.HTML)
   if html is not None:
     approval = IActuallyUnderstandSoyTypeSafetyAndHaveSecurityApproval(
@@ -166,9 +162,7 @@ def html_to_text(value):
   preserve_whitespace_stack = []
 
   def should_preserve_whitespace():
-    if preserve_whitespace_stack:
-      return preserve_whitespace_stack[-1][1]
-    return False
+    return preserve_whitespace_stack[-1][1] if preserve_whitespace_stack else False
 
   def get_style_preserves_whitespace(style):
     for match in _STYLE_RE.finditer(style):
@@ -190,7 +184,7 @@ def html_to_text(value):
         style = match.group(2)
         if style:
           # Strip quotes if the attribute value was quoted.
-          if style[0] == '\'' or style[0] == '"':
+          if style[0] in ['\'', '"']:
             style = style[1:-1]
           return get_style_preserves_whitespace(style)
         return None
@@ -227,7 +221,7 @@ def html_to_text(value):
       text += chunk
       if tag:
         if _REMOVING_TAGS_RE.match(tag):
-          removing_until = '/' + tag
+          removing_until = f'/{tag}'
         elif _NEWLINE_TAGS_RE.match(tag):
           text += '\n'
         elif _BLOCK_TAGS_RE.match(tag):
@@ -236,7 +230,7 @@ def html_to_text(value):
         elif _TAB_TAGS_RE.match(tag):
           text += '\t'
 
-        if not _HTML5_VOID_ELEMENTS_RE.match('<' + tag + '>'):
+        if not _HTML5_VOID_ELEMENTS_RE.match(f'<{tag}>'):
           update_preserve_whitespace_stack(tag, attrs)
     elif removing_until == tag:
       removing_until = ''
@@ -280,9 +274,7 @@ _NUMBER_RE = re.compile(r'\d*\.?\d+$')
 
 
 def filter_number(value):
-  if not _NUMBER_RE.match(str(value)):
-    return _INNOCUOUS_OUTPUT
-  return str(value)
+  return str(value) if _NUMBER_RE.match(str(value)) else _INNOCUOUS_OUTPUT
 
 
 def escape_html_attribute_nospace(value):
@@ -328,9 +320,9 @@ def escape_js_value(value):
   # We could use parentheses but those might be interpreted as a function call.
   # This matches the JS implementation in javascript/template/soy/soyutils.js.
   if isinstance(value, six.integer_types + (float, complex)):
-    return ' ' + str(value) + ' '
+    return f' {str(value)} '
 
-  return "'" + generated_sanitize.escape_js_string_helper(value) + "'"
+  return f"'{generated_sanitize.escape_js_string_helper(value)}'"
 
 
 def escape_uri(value):
@@ -433,9 +425,7 @@ def filter_normalize_refresh_uri(value):
 
 def filter_trusted_resource_uri(value):
   uri = _get_content_of_kind(value, CONTENT_KIND.TRUSTED_RESOURCE_URI)
-  if uri is not None:
-    return uri
-  return 'about:invalid#' + _INNOCUOUS_OUTPUT
+  return uri if uri is not None else f'about:invalid#{_INNOCUOUS_OUTPUT}'
 
 
 def normalize_html(value):
@@ -450,9 +440,7 @@ def filter_html_script_phrasing_data(value):
   """See docs on soy.$$filterHtmlScriptPhrasingData in soyutils_usegoog.js."""
 
   def ascii_to_lower(c):
-    if 'A' <= c <= 'Z':
-      return c.lower()
-    return c
+    return c.lower() if 'A' <= c <= 'Z' else c
 
   def match_prefix_ignore_case_past_end(needle, haystack, offset):
     chars_left = len(haystack) - offset
@@ -496,10 +484,7 @@ def whitespace_html_attributes(value):
 
 
 def get_content_dir(value):
-  if isinstance(value, SanitizedContent):
-    return value.content_dir
-
-  return None
+  return value.content_dir if isinstance(value, SanitizedContent) else None
 
 
 def is_content_kind(value, content_kind):
@@ -522,10 +507,7 @@ def _get_content_of_kind(value, content_kind):
   Returns:
     String content of value or None if other kind.
   """
-  if is_content_kind(value, content_kind):
-    return value.content
-
-  return None
+  return value.content if is_content_kind(value, content_kind) else None
 
 
 def _get_content_kind(value):
@@ -665,7 +647,7 @@ def _balance_tags(tags):
         del open_tags[index:]
 
     elif not _HTML5_VOID_ELEMENTS_RE.match(tag):
-      open_tags.append('</' + tag[1:])
+      open_tags.append(f'</{tag[1:]}')
 
   return ''.join(reversed(open_tags))
 

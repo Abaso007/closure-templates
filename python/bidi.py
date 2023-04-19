@@ -18,6 +18,7 @@ Soy functions and directives for setting bidirectional attributes and tags.
 All other directives and functions should go in sanitize.py or directives.py.
 """
 
+
 # Emulate Python 3 style unicode string literals.
 from __future__ import unicode_literals
 
@@ -71,27 +72,24 @@ _RTL_CHARS = '\u0591-\u07FF\u200F\uFB1D-\uFDFF\uFE70-\uFEFC'
 
 
 # Regular expression to check for LTR characters.
-_LTR_CHARS_RE = re.compile('[' + _LTR_CHARS + ']')
+_LTR_CHARS_RE = re.compile(f'[{_LTR_CHARS}]')
 
 
 # Regular expression to check if a piece of text is of RTL directionality on
 # first character with strong directionality.
-_RTL_DIR_CHECK_RE = re.compile('^[^' + _LTR_CHARS + ']*[' + _RTL_CHARS + ']')
+_RTL_DIR_CHECK_RE = re.compile(f'^[^{_LTR_CHARS}]*[{_RTL_CHARS}]')
 
 
 # Regular expressions to check if a piece of text is of LTR/RTL directionality
 # on the last character with strong direcitonality.
-_LTR_EXIT_DIR_CHECK_RE = re.compile(
-    '[' + _LTR_CHARS + '][^' + _RTL_CHARS + ']*$')
-_RTL_EXIT_DIR_CHECK_RE = re.compile(
-    '[' + _RTL_CHARS + '][^' + _LTR_CHARS + ']*$')
+_LTR_EXIT_DIR_CHECK_RE = re.compile(f'[{_LTR_CHARS}][^{_RTL_CHARS}]*$')
+_RTL_EXIT_DIR_CHECK_RE = re.compile(f'[{_RTL_CHARS}][^{_LTR_CHARS}]*$')
 
 
 # This constant controls threshold of rtl directionality.
 _RTL_ESTIMATION_THRESHOLD = 0.40
 
 
-# Unicode format characters to specify the directionality of text.
 class FORMAT:
   # Unicode "Left-To-Right Embedding" (LRE) character.
   LRE = '\u202A'
@@ -284,21 +282,15 @@ def unicode_wrap(global_dir, text):
 
 
 def bidi_end_edge(d):
-  if d < 0:
-    return 'left'
-  return 'right'
+  return 'left' if d < 0 else 'right'
 
 
 def bidi_start_edge(d):
-  if d < 0:
-    return 'right'
-  return 'left'
+  return 'right' if d < 0 else 'left'
 
 
 def bidi_mark(d):
-  if d < 0:
-    return '\u200F'
-  return '\u200E'
+  return '\u200F' if d < 0 else '\u200E'
 
 ###########
 # Classes #
@@ -372,14 +364,8 @@ class BidiFormatter(object):
     text = str(text)
 
     # Whether to add the "dir" attribute.
-    use_dir = (content_dir != sanitize.DIR.NEUTRAL and
-               content_dir != self.direction)
-    if use_dir:
-      # Wrap is needed.
-      result = '<span %s>%s</span>' % (self.attr(content_dir), text)
-    else:
-      result = text
-
+    use_dir = content_dir not in [sanitize.DIR.NEUTRAL, self.direction]
+    result = f'<span {self.attr(content_dir)}>{text}</span>' if use_dir else text
     return result + self.mark_after(content_dir, text, True)
 
   def unicode_wrap(self, content_dir, text, is_html):
@@ -394,13 +380,12 @@ class BidiFormatter(object):
     """
     text = str(text)
     result = []
-    if content_dir != sanitize.DIR.NEUTRAL and content_dir != self.direction:
+    if content_dir not in [sanitize.DIR.NEUTRAL, self.direction]:
       if content_dir == sanitize.DIR.RTL:
         result.append(FORMAT.RLE)
       else:
         result.append(FORMAT.LRE)
-      result.append(text)
-      result.append(FORMAT.PDF)
+      result.extend((text, FORMAT.PDF))
     else:
       result.append(text)
 
@@ -469,14 +454,13 @@ def _estimate_direction(value, is_html):
     elif _HAS_NUMERALS_RE.search(token):
       has_weakly_ltr = True
 
-  if total_count == 0 and has_weakly_ltr:
+  if (total_count == 0 and has_weakly_ltr or total_count != 0
+      and float(rtl_count) / total_count <= _RTL_ESTIMATION_THRESHOLD):
     return sanitize.DIR.LTR
   elif total_count == 0:
     return sanitize.DIR.NEUTRAL
-  elif float(rtl_count) / total_count > _RTL_ESTIMATION_THRESHOLD:
-    return sanitize.DIR.RTL
   else:
-    return sanitize.DIR.LTR
+    return sanitize.DIR.RTL
 
 
 def _get_bidi_formatter(global_dir):

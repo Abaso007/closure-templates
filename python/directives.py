@@ -54,4 +54,4 @@ def truncate(value, max_len, add_ellipsis):
   max_len -= 3
 
   # Truncate and add the ellipsis.
-  return value[:max_len] + '...'
+  return f'{value[:max_len]}...'

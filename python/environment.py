@@ -32,4 +32,4 @@ except NameError:
 
 
 def file_loader(file_path, file_name, access_mode='r'):
-  return open('%s/%s' % (file_path, file_name), access_mode)
+  return open(f'{file_path}/{file_name}', access_mode)

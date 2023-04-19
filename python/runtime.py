@@ -70,11 +70,10 @@ def get_xid_name(xid):
     The renamed xid.
   """
   if _xid_name_mapping:
-    renamed = _xid_name_mapping.get(xid)
-    if renamed:
+    if renamed := _xid_name_mapping.get(xid):
       return renamed
 
-  return xid + '_'
+  return f'{xid}_'
 
 
 def get_css_name(class_name, modifier=None):
@@ -170,7 +169,7 @@ def get_delegate_fn(template_id, variant, allow_empty_default):
     return _empty_template_function
   else:
     msg = ('Found no active impl for delegate call to "%s%s".')
-    raise RuntimeError(msg % (template_id, ':' + variant if variant else ''))
+    raise RuntimeError(msg % (template_id, f':{variant}' if variant else ''))
 
 
 def concat_attribute_values(l, r, delimiter):
@@ -186,9 +185,7 @@ def concat_attribute_values(l, r, delimiter):
   """
   if not l:
     return r
-  if not r:
-    return l
-  return l + delimiter + r
+  return l + delimiter + r if r else l
 
 
 def concat_css_values(l, r):
@@ -250,7 +247,7 @@ def namespaced_import(name, namespace=None, environment_path=None):
   Returns:
     The Module object.
   """
-  full_namespace = '%s.%s' % (namespace, name) if namespace else name
+  full_namespace = f'{namespace}.{name}' if namespace else name
   try:
     # Try searching for the module directly
     return importlib.import_module(full_namespace)
@@ -258,7 +255,7 @@ def namespaced_import(name, namespace=None, environment_path=None):
     # If the module isn't found, search without the namespace and check the
     # namespaces.
     if namespace:
-      namespace_key = "SOY_NAMESPACE: '%s'." % full_namespace
+      namespace_key = f"SOY_NAMESPACE: '{full_namespace}'."
       module = None
       if environment_path:
         file_loader = importlib.import_module(environment_path).file_loader
@@ -298,7 +295,7 @@ def manifest_import(namespace, manifest):
   if not manifest:
     raise ImportError('No manifest provided')
   elif namespace not in manifest:
-    raise ImportError('Manfest does not contain namespace: %s' % namespace)
+    raise ImportError(f'Manfest does not contain namespace: {namespace}')
 
   return importlib.import_module(manifest[namespace])
 
@@ -350,8 +347,8 @@ def register_delegate_fn(template_id, variant, priority, fn, fn_name):
   elif priority == curr_priority and fn_name != curr_fn_name:
     # Registering same-priority function: error.
     raise RuntimeError(
-        'Encountered two active delegates with the same priority (%s:%s:%s).' %
-        (template_id, variant, priority))
+        f'Encountered two active delegates with the same priority ({template_id}:{variant}:{priority}).'
+    )
 
 
 def type_safe_add(*args):
@@ -416,16 +413,17 @@ def list_contains(l, item):
 def list_indexof(l, item, start_index=0):
   """Equivalent getting the index of `item in l` but using soy's equality algorithm."""
   clamped_start_index = clamp_list_start_index(l, start_index)
-  for i in range(clamped_start_index, len(l)):
-    if type_safe_eq(l[i], item):
-      return i
-  return -1
+  return next(
+      (i for i in range(clamped_start_index, len(l))
+       if type_safe_eq(l[i], item)),
+      -1,
+  )
 
 
 def concat_maps(d1, d2):
   """Merges two maps together."""
   d3 = dict(d1)
-  d3.update(d2)
+  d3 |= d2
   return d3
 
 
@@ -450,7 +448,7 @@ def list_uniq(l):
   """Removes duplicates from list. The original list passed is not modified."""
   # dict preserves insertion order when fromKeys is called, so this function
   #   doesn't change the order of elements in our list.
-  return [x for i, x in enumerate(l) if not any([y is x for y in l[:i]])]
+  return [x for i, x in enumerate(l) if all(y is not x for y in l[:i])]
 
 
 def list_flat(l, depth=1):
@@ -593,7 +591,7 @@ def sqrt(num):
 
 
 def unsupported(msg):
-  raise Exception('unsupported feature: ' + msg)
+  raise Exception(f'unsupported feature: {msg}')
 
 
 def map_to_legacy_object_map(m):
@@ -628,9 +626,7 @@ def str_starts_with(s, val, start=0):
 
 def str_ends_with(s, val, length=None):
   """Returns whether s ends with val."""
-  if length is None:
-    return s.endswith(val)
-  return s.endswith(val, 0, int(length))
+  return s.endswith(val) if length is None else s.endswith(val, 0, int(length))
 
 
 def str_replace_all(s, match, token):
@@ -648,9 +644,7 @@ def str_split(s, sep, limit=None):
   if limit == 0:
     return []
   split_str = s.split(sep) if sep else list(s)
-  if limit is None or limit == -1:
-    return split_str
-  return split_str[:int(limit)]
+  return split_str if limit is None or limit == -1 else split_str[:int(limit)]
 
 
 def str_substring(s, start, end):
@@ -769,7 +763,7 @@ def _find_modules(name):
 
 
 def _gen_delegate_id(template_id, variant=''):
-  return 'key_%s:%s' % (template_id, variant)
+  return f'key_{template_id}:{variant}'
 
 
 def create_template_type(template, name):
@@ -813,4 +807,4 @@ class _TemplateWrapper:
     return self.template(*args)
 
   def __str__(self):
-    return '** FOR DEBUGGING ONLY: %s **' % self.name
+    return f'** FOR DEBUGGING ONLY: {self.name} **'
