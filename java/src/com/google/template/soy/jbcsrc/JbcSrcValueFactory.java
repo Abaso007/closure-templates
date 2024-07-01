@@ -32,6 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.GenericDescriptor;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolMessageEnum;
+import com.google.template.soy.data.PartialSoyTemplate;
+import com.google.template.soy.data.SoyTemplate;
 import com.google.template.soy.data.SoyValue;
 import com.google.template.soy.data.restricted.PrimitiveData;
 import com.google.template.soy.error.ErrorReporter;
@@ -553,6 +555,12 @@ final class JbcSrcValueFactory extends JavaValueFactory {
             SoyExpression.forInt(
                 BytecodeUtils.numericConversion(
                     MethodRefs.PROTOCOL_ENUM_GET_NUMBER.invoke(expr), Type.LONG_TYPE));
+      } else if (PartialSoyTemplate.class.isAssignableFrom(type)
+          || SoyTemplate.class.isAssignableFrom(type)) {
+
+        soyExpr =
+            SoyExpression.forSoyValue(
+                expectedType, MethodRefs.CREATE_TEMPLATE_VALUE_FROM_TEMPLATE.invoke(expr));
       } else {
         throw new IllegalStateException("invalid type: " + type);
       }
@@ -572,6 +580,9 @@ final class JbcSrcValueFactory extends JavaValueFactory {
     Preconditions.checkArgument(
         BytecodeUtils.isDefinitelyAssignableFrom(
             BytecodeUtils.SOY_VALUE_TYPE, delegate.resultType()));
+    if (delegate.isNonJavaNullable()) {
+      return delegate;
+    }
     return JAVA_NULL_TO_SOY_NULL.invoke(delegate);
   }
 }
